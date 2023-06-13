@@ -51,12 +51,11 @@
 #'                 y)
 #' }
 # Función para realizar predicciones de regresión lineal con variables dummy
-modelo_Regresion <- function(datos_entrenamiento, datos_prediccion, variable_dummy, var_resp) {
+predic_RMVC <- function(trainning, testing, regresoras, y) {
 
   # convertir los archivos en data.frame
-  de <- data.frame(datos_entrenamiento)
-  y <- de$y
-  dp <- data.frame(datos_prediccion)
+  de <- data.frame(trainning)
+  dp <- data.frame(testing)
 
   # Agregar la columna 'Y' con valores NA y reordenar las columnas
   dp_NA <- dp %>%
@@ -65,15 +64,16 @@ modelo_Regresion <- function(datos_entrenamiento, datos_prediccion, variable_dum
 
   # Ajustar los nombres de las columnas en dp_NA para que coincidan con los de de
   colnames(dp_NA) <- colnames(de)
+
   # Combinar los data.frames en uno solo
   df_NA <- rbind(dp_NA, de)
-
 
   # Convertimos a variables dummy
   f <- as.formula(paste0("~", paste0(colnames(df_NA[,-1]), collapse="+")))
   X = model.matrix(f, df_NA)
 
   ## definimos "y" y las "x" sin valores faltantes
+  colnames(df_NA)[1] <- "y"
   idNA <- is.na(df_NA$y)
   y <- df_NA$y[!idNA]
   X_entrenamiento <- X[!idNA, ]
@@ -87,15 +87,13 @@ modelo_Regresion <- function(datos_entrenamiento, datos_prediccion, variable_dum
   # Calculamos los valores de y ajustados y realizamos las predicciones
   Ajustado <- X_entrenamiento %*% beta
   Predicciones <- X_prediccion %*% beta
-  resultados <- data.frame(y, Ajustado, Predicciones)
 
   # Calculo de ECM
   ecm = sum((y - Ajustado)^2)/(n-p)
-
   # Resultados en forma de lista
-  resultados <- list(Ajustado = Ajustado,
+  resultados <- list(Ajustado <- data.frame(Ajustado),
                      Predicciones <- data.frame(cbind(Predicciones, dp)),
-                     ECM = ecm)
+                     ECM <- data.frame(ecm))
 
   return(resultados)
 }
